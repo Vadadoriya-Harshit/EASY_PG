@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Sample photo placeholder">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#164E63"/></linearGradient>
+<linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient></defs>
+<rect width="1200" height="800" fill="url(#g)"/>
+<rect x="150" y="430" width="420" height="190" rx="18" fill="#fff" fill-opacity=".16"/>
+<rect x="150" y="380" width="170" height="70" rx="14" fill="#fff" fill-opacity=".22"/>
+<rect x="680" y="250" width="320" height="370" rx="18" fill="#fff" fill-opacity=".12"/>
+<circle cx="900" cy="170" r="70" fill="#fff" fill-opacity=".18"/>
+<rect width="1200" height="800" fill="url(#f)"/>
+<text x="60" y="740" font-family="sans-serif" font-size="34" fill="#fff" fill-opacity=".85">Sample photo - replace with real Sorath PG media</text>
+</svg>

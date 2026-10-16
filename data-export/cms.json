@@ -1,0 +1,161 @@
+[
+  {
+    "key": "site_cms",
+    "hero": {
+      "line1": "Your next home,",
+      "line2": "near where you",
+      "line3": "study and work.",
+      "subtitle": "Curated student & executive residences across Satellite, Vastrapur, Navrangpura & Thaltej. Clear room rent, verified metro walking routes, and respectful house rules.",
+      "badge1": "Gujarat’s Most Transparent PG Discovery",
+      "badge2": "Zero Brokerage · 100% Owner Verified",
+      "slides": [
+        {
+          "image": "/images/hero-building.jpg",
+          "label": "Flagship Residence Exterior",
+          "tag": "Flagship Campus",
+          "location": "Satellite, Ahmedabad",
+          "beds": "Single & Double"
+        },
+        {
+          "image": "/images/room-single.jpg",
+          "label": "Executive Single Suite with Study Pod",
+          "tag": "Private Suite",
+          "location": "Satellite & Navrangpura",
+          "beds": "Private Single AC"
+        },
+        {
+          "image": "/images/study-lounge.jpg",
+          "label": "24/7 Co-working Study Lounge",
+          "tag": "Productivity Hub",
+          "location": "All Residences (100 Mbps)",
+          "beds": "Work Desks & Wi-Fi"
+        },
+        {
+          "image": "/images/rooftop-terrace.jpg",
+          "label": "Aesthetic Rooftop Sunset Deck",
+          "tag": "Skyline Lounge",
+          "location": "Thaltej & Satellite",
+          "beds": "Community Space"
+        },
+        {
+          "image": "/images/dining-hall.jpg",
+          "label": "Hygienic Dining Cafeteria",
+          "tag": "3 Fresh Meals Daily",
+          "location": "Navrangpura & Satellite",
+          "beds": "Full Meal Plan"
+        }
+      ]
+    },
+    "areas": {
+      "satellite": {
+        "slug": "satellite",
+        "name": "Satellite",
+        "image": "/images/hero-building.jpg",
+        "tag": "Flagship Hub",
+        "landmark": "Near ISRO & Jodhpur Cross Roads",
+        "metroStation": "Doordarshan Kendra Metro",
+        "distance": "1.1 km route",
+        "intro": "Quiet, established residential area near ISRO and SG Highway. Easy access to Prahlad Nagar and Shivranjani."
+      },
+      "navrangpura": {
+        "slug": "navrangpura",
+        "name": "Navrangpura",
+        "image": "/images/study-lounge.jpg",
+        "tag": "Academic Capital",
+        "landmark": "Near CEPT, Gujarat University & HL College",
+        "metroStation": "Commerce Six Roads Metro",
+        "distance": "0.5 km route",
+        "intro": "Ahmedabad's prime student and institutional hub. Walking distance to Gujarat University, CEPT and Commerce Six Roads."
+      },
+      "vastrapur": {
+        "slug": "vastrapur",
+        "name": "Vastrapur",
+        "image": "/images/rooftop-terrace.jpg",
+        "tag": "Vibrant Lake & IIM-A",
+        "landmark": "Near IIM Ahmedabad & Alpha One Mall",
+        "metroStation": "Gurukul Road Metro",
+        "distance": "1.4 km route",
+        "intro": "Green, lively neighbourhood around Vastrapur Lake. Close to IIM-A, Ahmedabad University and prime shopping."
+      },
+      "thaltej": {
+        "slug": "thaltej",
+        "name": "Thaltej",
+        "image": "/images/room-single.jpg",
+        "tag": "Executive Tech Corridor",
+        "landmark": "Near SG Highway, Zydus & Palladium",
+        "metroStation": "Thaltej Metro Station",
+        "distance": "0.6 km route",
+        "intro": "Modern residential belt along SG Highway with direct metro connectivity. Ideal for IT and corporate professionals."
+      }
+    },
+    "amenities": [
+      {
+        "id": "study",
+        "title": "24/7 Co-working Study Lounges",
+        "tag": "Academic Focus",
+        "description": "Ergonomic study chairs, dual 100 Mbps redundant fibre connections, soundproofing, and private charging ports.",
+        "image": "/images/study-lounge.jpg",
+        "features": [
+          "Acoustic treatment",
+          "100 Mbps Fibre",
+          "Power backup",
+          "Individual study pods"
+        ]
+      },
+      {
+        "id": "food",
+        "title": "Hygienic Dining & 3 Fresh Meals",
+        "tag": "Pure Nutrition",
+        "description": "Cooked in clean, commercial-grade stainless steel kitchens. Rotating Gujarati, North Indian, and Jain menus.",
+        "image": "/images/dining-hall.jpg",
+        "features": [
+          "Breakfast, lunch & dinner",
+          "RO purified drinking water",
+          "Unlimited servings",
+          "Weekly special dessert"
+        ]
+      },
+      {
+        "id": "rooftop",
+        "title": "Aesthetic Rooftop Deck & Community",
+        "tag": "Lifestyle & Wellness",
+        "description": "Open-air sunset hangout space for evening discussions, yoga sessions, acoustic nights, and unwinding.",
+        "image": "/images/rooftop-terrace.jpg",
+        "features": [
+          "Panoramic skyline view",
+          "Turf & seating lounge",
+          "Festival gatherings",
+          "Table tennis & board games"
+        ]
+      },
+      {
+        "id": "washroom",
+        "title": "Attached Ceramic Modern Washrooms",
+        "tag": "Hygiene Standard",
+        "description": "Equipped with branded sanitaryware, 24/7 solar + instant geyser hot water, anti-skid tiles, and daily sanitization.",
+        "image": "/images/bathroom.jpg",
+        "features": [
+          "Hot water geysers",
+          "Mirror & vanity shelf",
+          "Exhaust ventilation",
+          "Daily housekeeping"
+        ]
+      }
+    ],
+    "contact": {
+      "phone": "+91 98250 12345",
+      "whatsapp": "919825012345",
+      "email": "contact@luxorapg.com",
+      "address": "Luxora House, Opp. Shivranjani Cross Road, Satellite, Ahmedabad, Gujarat 380015",
+      "visitingHours": "10:00 AM – 7:30 PM (Daily)",
+      "announcement": "Admissions Open 2026-27: Verified Boys & Girls PGs in Satellite, Vastrapur, Navrangpura & Thaltej. 0% Brokerage."
+    },
+    "about": {
+      "heroTitle": "Revolutionising PG Living in Ahmedabad",
+      "heroSubtitle": "From a single 12-bed facility in Satellite in 2021 to Gujarat's leading verified student and executive co-living network.",
+      "heroBadge": "The Luxora Story & Mission",
+      "statBeds": "500+ Beds Managed",
+      "statRating": "4.8★ Resident Rating"
+    }
+  }
+]

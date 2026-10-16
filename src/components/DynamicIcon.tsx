@@ -1,0 +1,100 @@
+import React from "react";
+import {
+  Building2,
+  Users,
+  ShieldCheck,
+  MapPin,
+  Train,
+  Layers,
+  Sparkles,
+  GitCompareArrows,
+  Compass,
+  Wifi,
+  Utensils,
+  Sun,
+  Lock,
+  CheckCircle2,
+  PhoneCall,
+  HelpCircle,
+  HeartHandshake,
+  Award,
+  Clock,
+  Mail,
+  FileText,
+  Globe,
+  CalendarCheck,
+  Wallet,
+  UtensilsCrossed,
+  Star,
+  MessageSquare,
+  Phone,
+  Shield,
+  Zap,
+  BookOpen,
+  Coffee,
+  Tv,
+  Bath,
+  Home,
+  Check,
+  Flame,
+  Key,
+  BadgeCheck,
+  LucideIcon
+} from "lucide-react";
+
+export const ICON_MAP: Record<string, LucideIcon> = {
+  Building2,
+  Users,
+  ShieldCheck,
+  MapPin,
+  Train,
+  Layers,
+  Sparkles,
+  GitCompareArrows,
+  Compass,
+  Wifi,
+  Utensils,
+  Sun,
+  Lock,
+  CheckCircle2,
+  PhoneCall,
+  HelpCircle,
+  HeartHandshake,
+  Award,
+  Clock,
+  Mail,
+  FileText,
+  Globe,
+  CalendarCheck,
+  Wallet,
+  UtensilsCrossed,
+  Star,
+  MessageSquare,
+  Phone,
+  Shield,
+  Zap,
+  BookOpen,
+  Coffee,
+  Tv,
+  Bath,
+  Home,
+  Check,
+  Flame,
+  Key,
+  BadgeCheck,
+};
+
+export const AVAILABLE_ICON_NAMES = Object.keys(ICON_MAP);
+
+export default function DynamicIcon({
+  name,
+  size = 18,
+  className = "",
+}: {
+  name: string;
+  size?: number;
+  className?: string;
+}) {
+  const IconComponent = ICON_MAP[name] || Sparkles;
+  return <IconComponent size={size} className={className} />;
+}

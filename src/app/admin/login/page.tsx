@@ -91,7 +91,7 @@ export default function Login() {
         return;
       } else if (res.ok && !data.requireOtp) {
         setAlreadyLoggedIn(false);
-        router.push("/admin/leads");
+        router.push("/admin");
         return;
       } else {
         if (data.alreadyLoggedIn) {

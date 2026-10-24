@@ -128,7 +128,7 @@ export default function VerifyOtp() {
         } catch {}
         setPhase("success");
         setTimeout(() => {
-          router.replace("/admin/leads");
+          router.replace("/admin");
         }, 900);
       } catch {
         setErr("Could not reach server. Check connection.");

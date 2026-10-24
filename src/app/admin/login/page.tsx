@@ -91,7 +91,12 @@ export default function Login() {
         return;
       } else if (res.ok && !data.requireOtp) {
         setAlreadyLoggedIn(false);
-        router.push("/admin");
+        try {
+          if (data?.sid) {
+            sessionStorage.setItem("luxora_admin_tab_active", data.sid);
+          }
+        } catch {}
+        window.location.href = "/admin";
         return;
       } else {
         if (data.alreadyLoggedIn) {

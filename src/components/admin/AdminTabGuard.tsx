@@ -28,27 +28,20 @@ export default function AdminTabGuard({ currentSessionSid }: { currentSessionSid
     resetInactivity();
 
     // 2. Tab Session Lifecycle Check:
-    // sessionStorage is tied exclusively to the lifecycle of this single tab.
-    // When the tab is closed, sessionStorage is destroyed.
-    // If a user later enters /admin without an active tab session,
-    // we clear cookies and redirect cleanly to /admin/login without any noisy banners!
+    // If currentSessionSid exists from server, sync it to sessionStorage for this tab.
+    // If the active tab session was invalidated or belongs to a different session, sign out cleanly.
     const activeTabSid = sessionStorage.getItem("luxora_admin_tab_active");
 
-    if (!activeTabSid) {
-      // Tab was closed, clear session and return to clean login page
-      fetch("/api/auth/logout", { method: "POST" })
-        .then(() => {
-          sessionStorage.removeItem("luxora_admin_tab_active");
-          router.replace("/admin/login");
-        })
-        .catch(() => { });
-      return;
-    } else if (currentSessionSid && activeTabSid !== currentSessionSid) {
-      sessionStorage.removeItem("luxora_admin_tab_active");
-      fetch("/api/auth/logout", { method: "POST" }).finally(() => {
-        router.replace("/admin/login");
-      });
-      return;
+    if (currentSessionSid) {
+      if (!activeTabSid) {
+        sessionStorage.setItem("luxora_admin_tab_active", currentSessionSid);
+      } else if (activeTabSid !== currentSessionSid) {
+        sessionStorage.removeItem("luxora_admin_tab_active");
+        fetch("/api/auth/logout", { method: "POST" }).finally(() => {
+          window.location.href = "/admin/login";
+        });
+        return;
+      }
     }
 
     return () => {

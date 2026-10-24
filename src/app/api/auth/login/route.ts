@@ -77,6 +77,7 @@ export async function POST(req: Request) {
         NextResponse.json({
           ok: true,
           requireOtp: false,
+          sid,
           user: { email: user.email, name: user.name || "Admin", role: normalizeRole(user.role), avatar: user.avatar || "" },
         })
       );

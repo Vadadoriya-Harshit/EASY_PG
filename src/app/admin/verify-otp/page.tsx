@@ -125,11 +125,14 @@ export default function VerifyOtp() {
         // Successfully verified
         try {
           sessionStorage.removeItem(KEY);
+          if (data?.sid) {
+            sessionStorage.setItem("luxora_admin_tab_active", data.sid);
+          }
         } catch {}
         setPhase("success");
         setTimeout(() => {
-          router.replace("/admin");
-        }, 900);
+          window.location.href = "/admin";
+        }, 800);
       } catch {
         setErr("Could not reach server. Check connection.");
         setPhase("idle");

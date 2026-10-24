@@ -5,7 +5,7 @@ import {
 } from "@/lib/auth";
 import { dummyVerify } from "@/lib/passwords";
 import { issueOtp, clearOtp, OTP_TTL_MS } from "@/lib/otp";
-import { rateLimitShared } from "@/lib/rate-limit";
+import { rateLimitShared, rateLimitReset } from "@/lib/rate-limit";
 import { sendOtpEmail } from "@/lib/email";
 import { auditLog } from "@/lib/audit";
 import { clientIp, jsonError, readJson, noStore } from "@/lib/http";
@@ -22,8 +22,10 @@ function mask(email: string) {
 export async function POST(req: Request) {
   const ip = clientIp(req);
   try {
-    const ipLimit = await rateLimitShared(`login-ip:${ip}`, 15, 10 * 60_000);
-    if (!ipLimit.allowed) return jsonError("Too many sign-in attempts. Please wait a few minutes.", 429, { retryAfterSec: ipLimit.retryAfterSec });
+    const ipLimit = await rateLimitShared(`login-ip:${ip}`, 5, 5 * 60_000);
+    if (!ipLimit.allowed) {
+      return jsonError(`Too many sign-in attempts from this network. Please wait ${ipLimit.retryAfterSec}s.`, 429, { retryAfterSec: ipLimit.retryAfterSec });
+    }
 
     const body = await readJson(req, 5_000);
     const { email, password, force } = body || {};
@@ -32,8 +34,10 @@ export async function POST(req: Request) {
     }
     const cleanEmail = email.toLowerCase().trim();
 
-    const accLimit = await rateLimitShared(`login-acc:${cleanEmail}`, 10, 10 * 60_000);
-    if (!accLimit.allowed) return jsonError("Too many sign-in attempts on this account. Please wait a few minutes.", 429, { retryAfterSec: accLimit.retryAfterSec });
+    const accLimit = await rateLimitShared(`login-acc:${cleanEmail}`, 5, 5 * 60_000);
+    if (!accLimit.allowed) {
+      return jsonError(`Too many sign-in attempts on this account. Please wait ${accLimit.retryAfterSec}s.`, 429, { retryAfterSec: accLimit.retryAfterSec });
+    }
 
     const user = await findAdminUser(cleanEmail);
     if (!user || user.active === false) {
@@ -51,6 +55,7 @@ export async function POST(req: Request) {
       return jsonError(GENERIC, 401);
     }
     await recordLoginSuccess(user.email);
+    await rateLimitReset(`login-acc:${cleanEmail}`);
 
     // One active session per account. The other session is only replaced after the OTP step succeeds.
     const active = await hasActiveSession(user.email);

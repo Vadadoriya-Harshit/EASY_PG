@@ -4,7 +4,7 @@ import {
   signSession, verifyOtpChallenge, normalizeRole,
 } from "@/lib/auth";
 import { verifyOtp, otpErrorMessage } from "@/lib/otp";
-import { rateLimitShared } from "@/lib/rate-limit";
+import { rateLimitShared, rateLimitReset } from "@/lib/rate-limit";
 import { auditLog } from "@/lib/audit";
 import { clientIp, jsonError, readJson, noStore } from "@/lib/http";
 
@@ -13,13 +13,20 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const ip = clientIp(req);
   try {
-    const limit = await rateLimitShared(`verify-otp-ip:${ip}`, 20, 10 * 60_000);
-    if (!limit.allowed) return jsonError("Too many attempts. Please wait a few minutes.", 429, { retryAfterSec: limit.retryAfterSec });
+    const ipLimit = await rateLimitShared(`verify-otp-ip:${ip}`, 5, 5 * 60_000);
+    if (!ipLimit.allowed) {
+      return jsonError(`Too many attempts from this network. Please wait ${ipLimit.retryAfterSec}s.`, 429, { retryAfterSec: ipLimit.retryAfterSec });
+    }
 
     // The sign-in challenge cookie proves the password step succeeded. Without it no code is even checked.
     const cookie = req.headers.get("cookie")?.match(new RegExp(`(?:^|;\\s*)${OTP_COOKIE}=([^;]+)`))?.[1];
     const challenge = await verifyOtpChallenge(cookie);
     if (!challenge) return jsonError("Your sign-in session expired. Please enter your email and password again.", 401, { restart: true });
+
+    const accLimit = await rateLimitShared(`verify-otp-acc:${challenge.email}`, 5, 5 * 60_000);
+    if (!accLimit.allowed) {
+      return jsonError(`Too many verification attempts for this account. Please wait ${accLimit.retryAfterSec}s.`, 429, { retryAfterSec: accLimit.retryAfterSec });
+    }
 
     const body = await readJson(req, 2_000);
     const code = typeof body?.otp === "string" ? body.otp.trim() : "";
@@ -31,6 +38,10 @@ export async function POST(req: Request) {
       const res = jsonError(otpErrorMessage(result), 401, { reason: result.reason, restart: result.reason === "locked" || result.reason === "none" });
       return res;
     }
+
+    // Clear rate limits on valid OTP
+    await rateLimitReset(`verify-otp-ip:${ip}`);
+    await rateLimitReset(`verify-otp-acc:${challenge.email}`);
 
     const user = await findAdminUser(challenge.email);
     if (!user || user.active === false) return jsonError("This account is not available.", 403);

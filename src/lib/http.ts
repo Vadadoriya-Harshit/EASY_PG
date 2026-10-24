@@ -23,7 +23,11 @@ export function safeJsonLd(data: unknown): string {
 
 /** Generic JSON error that never leaks internals. */
 export function jsonError(message: string, status = 400, extra?: Record<string, unknown>) {
-  return NextResponse.json({ error: message, ...extra }, { status, headers: { "Cache-Control": "no-store" } });
+  const headers: Record<string, string> = { "Cache-Control": "no-store" };
+  if (status === 429 && extra?.retryAfterSec != null) {
+    headers["Retry-After"] = String(extra.retryAfterSec);
+  }
+  return NextResponse.json({ error: message, ...extra }, { status, headers });
 }
 
 export function noStore<T extends NextResponse>(res: T): T {

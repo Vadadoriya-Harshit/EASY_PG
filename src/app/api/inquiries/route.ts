@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { inquirySchema } from "@/lib/validators";
 import { createInquiry, listInquiries, trackEvent } from "@/lib/repo";
-import { rateLimit } from "@/lib/rate-limit";
-import { clientIp } from "@/lib/http";
+import { rateLimitShared } from "@/lib/rate-limit";
+import { clientIp, jsonError } from "@/lib/http";
 import { uid } from "@/lib/utils";
 import type { Inquiry } from "@/lib/types";
 
@@ -10,18 +10,24 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const ip = clientIp(req);
-  if (!rateLimit(`inq:${ip}`, 5, 60_000)) {
-    return NextResponse.json({ error: "Too many requests. Please wait a minute and try again." }, { status: 429 });
+  const ipLimit = await rateLimitShared(`inq-ip:${ip}`, 5, 5 * 60_000);
+  if (!ipLimit.allowed) {
+    return jsonError(`Too many inquiries sent from this network. Please wait ${ipLimit.retryAfterSec}s.`, 429, { retryAfterSec: ipLimit.retryAfterSec });
   }
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid request" }, { status: 400 }); }
+  try { body = await req.json(); } catch { return jsonError("Invalid request", 400); }
 
   const parsed = inquirySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid details", fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+    return jsonError(parsed.error.issues[0]?.message || "Invalid details", 400, { fields: parsed.error.flatten().fieldErrors });
   }
   const d = parsed.data;
   if (d.website) return NextResponse.json({ ok: true }); // honeypot: silently accept bots
+
+  const phoneLimit = await rateLimitShared(`inq-phone:${d.phone}`, 3, 10 * 60_000);
+  if (!phoneLimit.allowed) {
+    return jsonError(`We have already received an inquiry from this number. Please wait ${phoneLimit.retryAfterSec}s.`, 429, { retryAfterSec: phoneLimit.retryAfterSec });
+  }
 
   // Same person, same request within 10 minutes: tell them we have it instead of creating a second lead.
   try {

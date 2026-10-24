@@ -11,12 +11,19 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const ip = clientIp(req);
   try {
-    const limit = await rateLimitShared(`resend-otp-ip:${ip}`, 10, 10 * 60_000);
-    if (!limit.allowed) return jsonError("Too many requests. Please wait a few minutes.", 429, { retryAfterSec: limit.retryAfterSec });
+    const ipLimit = await rateLimitShared(`resend-otp-ip:${ip}`, 3, 10 * 60_000);
+    if (!ipLimit.allowed) {
+      return jsonError(`Too many code requests from this network. Please wait ${ipLimit.retryAfterSec}s.`, 429, { retryAfterSec: ipLimit.retryAfterSec });
+    }
 
     const cookie = req.headers.get("cookie")?.match(new RegExp(`(?:^|;\\s*)${OTP_COOKIE}=([^;]+)`))?.[1];
     const challenge = await verifyOtpChallenge(cookie);
     if (!challenge) return jsonError("Your sign-in session expired. Please sign in again.", 401, { restart: true });
+
+    const accLimit = await rateLimitShared(`resend-otp-acc:${challenge.email}`, 3, 10 * 60_000);
+    if (!accLimit.allowed) {
+      return jsonError(`Too many code requests for this account. Please wait ${accLimit.retryAfterSec}s.`, 429, { retryAfterSec: accLimit.retryAfterSec });
+    }
 
     const user = await findAdminUser(challenge.email);
     if (!user || user.active === false) return jsonError("This account is not available.", 403);

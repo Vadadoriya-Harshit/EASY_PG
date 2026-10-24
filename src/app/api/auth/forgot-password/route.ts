@@ -14,12 +14,19 @@ const NEUTRAL = "If that email belongs to an administrator, a 6-digit reset code
 export async function POST(req: Request) {
   const ip = clientIp(req);
   try {
-    const ipLimit = await rateLimitShared(`forgot-ip:${ip}`, 8, 15 * 60_000);
-    if (!ipLimit.allowed) return jsonError("Too many requests. Please wait a few minutes.", 429, { retryAfterSec: ipLimit.retryAfterSec });
+    const ipLimit = await rateLimitShared(`forgot-ip:${ip}`, 3, 15 * 60_000);
+    if (!ipLimit.allowed) {
+      return jsonError(`Too many password reset requests from this network. Please wait ${ipLimit.retryAfterSec}s.`, 429, { retryAfterSec: ipLimit.retryAfterSec });
+    }
 
     const body = await readJson(req, 2_000);
     const email = normalizeEmail(body?.email);
     if (!email) return jsonError("Please enter a valid email address.", 400);
+
+    const emailLimit = await rateLimitShared(`forgot-acc:${email}`, 3, 15 * 60_000);
+    if (!emailLimit.allowed) {
+      return jsonError(`Too many password reset requests for this account. Please wait ${emailLimit.retryAfterSec}s.`, 429, { retryAfterSec: emailLimit.retryAfterSec });
+    }
 
     const user = await findAdminUser(email);
     if (user && user.active !== false) {

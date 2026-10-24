@@ -1,0 +1,54 @@
+[
+  {
+    "slug": "satellite",
+    "name": "Satellite",
+    "city": "Ahmedabad",
+    "intro": "Prime residential & student corridor near ISRO, Jodhpur Char Rasta, and SG Highway corporate hub. Excellent connectivity via Doordarshan Kendra Metro and BRTS feeder lines.",
+    "landmarks": [
+      "Doordarshan Kendra Metro",
+      "Jodhpur Cross Roads",
+      "Star Bazaar",
+      "ISRO Colony"
+    ],
+    "active": true
+  },
+  {
+    "slug": "vastrapur",
+    "name": "Vastrapur",
+    "city": "Ahmedabad",
+    "intro": "Vibrant educational & youth district surrounding the serene Vastrapur Lake, IIM Ahmedabad campus, and Alpha One Mall. Famous for quiet study cafes and evening street food hubs.",
+    "landmarks": [
+      "Vastrapur Lake",
+      "IIM Ahmedabad",
+      "Ahmedabad University",
+      "Alpha One Mall"
+    ],
+    "active": true
+  },
+  {
+    "slug": "navrangpura",
+    "name": "Navrangpura",
+    "city": "Ahmedabad",
+    "intro": "The university heart of Ahmedabad hosting Gujarat University, CEPT University, and premier coaching centers. Walking distance from Commerce Six Roads Metro station.",
+    "landmarks": [
+      "Commerce Six Roads Metro",
+      "Gujarat University Library",
+      "CEPT Campus",
+      "LD College of Engineering"
+    ],
+    "active": true
+  },
+  {
+    "slug": "thaltej",
+    "name": "Thaltej",
+    "city": "Ahmedabad",
+    "intro": "Modern, quiet, upscale neighbourhood near Thaltej Metro Station (Blue Line terminus) and SG Highway IT corridor. Ideal for IT professionals and postgraduates wanting calm surroundings.",
+    "landmarks": [
+      "Thaltej Metro Station",
+      "Acropolis Mall",
+      "SG Highway IT Park",
+      "Sola Civil Circle"
+    ],
+    "active": true
+  }
+]

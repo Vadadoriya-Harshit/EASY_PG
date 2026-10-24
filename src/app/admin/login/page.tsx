@@ -89,6 +89,10 @@ export default function Login() {
         } catch {}
         router.push("/admin/verify-otp");
         return;
+      } else if (res.ok && !data.requireOtp) {
+        setAlreadyLoggedIn(false);
+        router.push("/admin/leads");
+        return;
       } else {
         if (data.alreadyLoggedIn) {
           setAlreadyLoggedIn(true);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   findAdminUser, checkPassword, hasActiveSession, isLocked, recordLoginFailure, recordLoginSuccess,
-  signOtpChallenge, OTP_COOKIE, sessionCookieOptions,
+  signOtpChallenge, OTP_COOKIE, sessionCookieOptions, COOKIE, newSid, registerActiveSession, signSession, normalizeRole,
 } from "@/lib/auth";
 import { dummyVerify } from "@/lib/passwords";
 import { issueOtp, clearOtp, OTP_TTL_MS } from "@/lib/otp";
@@ -65,6 +65,23 @@ export async function POST(req: Request) {
         409,
         { alreadyLoggedIn: true, since: active.since }
       );
+    }
+
+    // Option to disable OTP requirement (e.g. while setting up Resend or in emergencies)
+    const requireOtp = process.env.REQUIRE_ADMIN_OTP !== "false" && process.env.DISABLE_LOGIN_OTP !== "true";
+    if (!requireOtp) {
+      const sid = newSid();
+      await registerActiveSession(user.email, sid, ip);
+      await auditLog({ actor: user.email, action: "auth.login.success", ip });
+      const res = noStore(
+        NextResponse.json({
+          ok: true,
+          requireOtp: false,
+          user: { email: user.email, name: user.name || "Admin", role: normalizeRole(user.role), avatar: user.avatar || "" },
+        })
+      );
+      res.cookies.set(COOKIE, await signSession(user.email, sid), sessionCookieOptions());
+      return res;
     }
 
     const issued = await issueOtp(user.email, "login");

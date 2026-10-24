@@ -35,18 +35,53 @@ function cleanEnv(val?: string): string {
   return val.trim().replace(/^['"]|['"]$/g, "");
 }
 
-function driver(): "smtp" | "file" | "none" {
+function driver(): "resend" | "smtp" | "file" | "none" {
+  if (cleanEnv(process.env.RESEND_API_KEY)) return "resend";
   const d = cleanEnv(process.env.EMAIL_DRIVER);
+  if (d === "resend") return "resend";
   if (d === "file" && !isProd()) return "file";
   const host = cleanEnv(process.env.SMTP_HOST);
   const user = cleanEnv(process.env.SMTP_USER);
   const pass = cleanEnv(process.env.SMTP_PASS);
-  if (d === "smtp" || (!d && host && user && pass)) return "smtp";
+  if (d === "smtp" || (!d && (host || user.includes("@gmail.com")) && user && pass)) return "smtp";
   if (!d && !isProd()) return "file";
   return "none";
 }
 
 export const mailConfigured = () => driver() !== "none";
+
+async function sendViaResend(apiKey: string, m: MailInput): Promise<MailResult> {
+  const rawFrom = cleanEnv(process.env.RESEND_FROM) || cleanEnv(process.env.SMTP_FROM);
+  const from = (rawFrom && !rawFrom.includes("your-domain.example"))
+    ? rawFrom
+    : "Luxora PG <onboarding@resend.dev>";
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [m.to],
+        subject: m.subject,
+        html: m.html,
+        text: m.text,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.error("[resend] API error:", data);
+      return { success: false, error: data?.message || data?.error || "Resend API delivery failed" };
+    }
+    return { success: true, messageId: data?.id };
+  } catch (err: any) {
+    console.error("[resend] network error:", err?.message);
+    return { success: false, error: err?.message || "Resend network error" };
+  }
+}
 
 function getSmtpTransport() {
   const host = cleanEnv(process.env.SMTP_HOST);
@@ -57,8 +92,6 @@ function getSmtpTransport() {
   const isGmail = host.toLowerCase().includes("gmail") || user.toLowerCase().includes("@gmail.com") || host === "";
 
   if (isGmail) {
-    // Gmail / Google Workspace on cloud serverless (Vercel/AWS) works reliably via service: "gmail" (Port 465 SSL).
-    // AWS Lambda blocks outbound port 587 STARTTLS, causing "Connection timeout".
     return nodemailer.createTransport({
       service: "gmail",
       auth: { user, pass },
@@ -85,7 +118,18 @@ function getSmtpTransport() {
 export async function sendMail(m: MailInput): Promise<MailResult> {
   if (g.__sorathMailSender) return g.__sorathMailSender(m);
   const d = driver();
-  if (d === "none") return { success: false, error: "Email delivery is not configured (set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in production environment variables)." };
+  if (d === "none") {
+    return {
+      success: false,
+      error: "Email delivery is not configured. In production, set RESEND_API_KEY (recommended) or SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS.",
+    };
+  }
+
+  if (d === "resend") {
+    const key = cleanEnv(process.env.RESEND_API_KEY);
+    return sendViaResend(key, m);
+  }
+
   if (d === "file") {
     const dir = process.env.MAIL_OUTBOX_DIR || path.join(process.cwd(), ".mail-outbox");
     fs.mkdirSync(dir, { recursive: true });
@@ -94,6 +138,7 @@ export async function sendMail(m: MailInput): Promise<MailResult> {
     console.log(`[mail] captured ${id}.json (EMAIL_DRIVER=file)`);
     return { success: true, messageId: id };
   }
+
   const t = getSmtpTransport();
   if (!t) return { success: false, error: "SMTP credentials are incomplete (check SMTP_HOST, SMTP_USER, SMTP_PASS)." };
   const rawFrom = cleanEnv(process.env.SMTP_FROM);

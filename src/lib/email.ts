@@ -52,15 +52,27 @@ function getSmtpTransport() {
   const host = cleanEnv(process.env.SMTP_HOST);
   const user = cleanEnv(process.env.SMTP_USER);
   const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, ""); // strip accidental spaces in app passwords
-  if (!host || !user || !pass) return null;
+  if (!user || !pass) return null;
 
-  const isGmail = host.toLowerCase().includes("gmail") || user.toLowerCase().includes("@gmail.com");
-  const configuredPort = Number(cleanEnv(process.env.SMTP_PORT) || 0);
-  const port = configuredPort || (isGmail ? 465 : 587);
+  const isGmail = host.toLowerCase().includes("gmail") || user.toLowerCase().includes("@gmail.com") || host === "";
+
+  if (isGmail) {
+    // Gmail / Google Workspace on cloud serverless (Vercel/AWS) works reliably via service: "gmail" (Port 465 SSL).
+    // AWS Lambda blocks outbound port 587 STARTTLS, causing "Connection timeout".
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: { user, pass },
+      connectionTimeout: 12_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
+    });
+  }
+
+  const port = Number(cleanEnv(process.env.SMTP_PORT) || 587);
   const secure = port === 465;
 
   return nodemailer.createTransport({
-    host: isGmail && !host ? "smtp.gmail.com" : host,
+    host,
     port,
     secure,
     auth: { user, pass },

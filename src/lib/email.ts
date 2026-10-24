@@ -51,7 +51,7 @@ function driver(): "resend" | "smtp" | "file" | "none" {
 export const mailConfigured = () => driver() !== "none";
 
 async function sendViaResend(apiKey: string, m: MailInput): Promise<MailResult> {
-  const rawFrom = cleanEnv(process.env.RESEND_FROM) || cleanEnv(process.env.SMTP_FROM);
+  const rawFrom = cleanEnv(process.env.RESEND_FROM);
   const from = (rawFrom && !rawFrom.includes("your-domain.example"))
     ? rawFrom
     : "Luxora PG <onboarding@resend.dev>";

@@ -30,8 +30,8 @@ export async function POST(req: Request) {
     const out = await subscribe({ ...parsed.data, email, consent: true, source: parsed.data.source || "public" });
     if (!out.ok) return jsonError(out.error, 400);
     if (out.mail && !out.mail.success) {
-      console.error("[vacancy] confirmation e-mail could not be delivered");
-      return jsonError("We saved your request but could not send the confirmation email just now. Please try again in a little while.", 503);
+      console.warn("[vacancy] confirmation e-mail could not be delivered immediately:", out.mail.error);
+      // Do not block the visitor with 503: the subscription is already safely recorded in the database.
     }
     return noStore(NextResponse.json({ ok: true, message: NEUTRAL }));
   } catch (e: any) {

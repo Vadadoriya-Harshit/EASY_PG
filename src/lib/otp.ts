@@ -14,6 +14,29 @@ import { rateLimitShared } from "./rate-limit";
  */
 export type OtpPurpose = "login" | "reset";
 
+export const getOtpTtlMs = () => {
+  const v = Number(process.env.OTP_TTL_SEC);
+  return !isNaN(v) && v > 0 ? v * 1000 : 5 * 60_000;
+};
+
+export const getOtpMaxAttempts = () => {
+  if (process.env.DISABLE_RATE_LIMIT === "true" || process.env.RATE_LIMIT_DISABLED === "true") return 999;
+  const v = Number(process.env.OTP_MAX_ATTEMPTS);
+  return !isNaN(v) && v > 0 ? v : 5;
+};
+
+export const getOtpResendCooldownMs = () => {
+  if (process.env.DISABLE_RATE_LIMIT === "true" || process.env.RATE_LIMIT_DISABLED === "true") return 0;
+  const v = Number(process.env.OTP_RESEND_COOLDOWN_SEC);
+  return !isNaN(v) && v >= 0 ? v * 1000 : 60_000;
+};
+
+export const getOtpMaxSendsPerHour = () => {
+  if (process.env.DISABLE_RATE_LIMIT === "true" || process.env.RATE_LIMIT_DISABLED === "true") return 999;
+  const v = Number(process.env.OTP_MAX_SENDS_PER_HOUR);
+  return !isNaN(v) && v > 0 ? v : 5;
+};
+
 export const OTP_TTL_MS = 5 * 60_000;
 export const OTP_MAX_ATTEMPTS = 5;
 export const OTP_RESEND_COOLDOWN_MS = 60_000;
@@ -30,23 +53,26 @@ export type IssueResult =
 export async function issueOtp(email: string, purpose: OtpPurpose): Promise<IssueResult> {
   const key = keyOf(email, purpose);
   const now = Date.now();
+  const cooldownMs = getOtpResendCooldownMs();
+  const maxSends = getOtpMaxSendsPerHour();
+  const ttlMs = getOtpTtlMs();
 
   const existing = await otps().findOne({ key });
-  if (existing && existing.sentAt && now - Number(existing.sentAt) < OTP_RESEND_COOLDOWN_MS) {
-    return { ok: false, reason: "cooldown", retryAfterSec: Math.ceil((OTP_RESEND_COOLDOWN_MS - (now - Number(existing.sentAt))) / 1000) };
+  if (cooldownMs > 0 && existing && existing.sentAt && now - Number(existing.sentAt) < cooldownMs) {
+    return { ok: false, reason: "cooldown", retryAfterSec: Math.ceil((cooldownMs - (now - Number(existing.sentAt))) / 1000) };
   }
-  const lim = await rateLimitShared(`otp-send:${key}`, OTP_MAX_SENDS_PER_HOUR, 3_600_000);
+  const lim = await rateLimitShared(`otp-send:${key}`, maxSends, 3_600_000);
   if (!lim.allowed) return { ok: false, reason: "limit", retryAfterSec: lim.retryAfterSec };
 
   const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
-  const expiresAt = now + OTP_TTL_MS;
+  const expiresAt = now + ttlMs;
   // new code always replaces (and so invalidates) the previous one and resets attempts
   await otps().updateOne(
     { key },
     { $set: { key, hash: hmac(key, code), attempts: 0, sentAt: now, expiresAt: new Date(expiresAt) } },
     { upsert: true }
   );
-  return { ok: true, code, expiresAt, resendAfterSec: OTP_RESEND_COOLDOWN_MS / 1000 };
+  return { ok: true, code, expiresAt, resendAfterSec: cooldownMs / 1000 };
 }
 
 export type VerifyResult =
@@ -56,16 +82,17 @@ export type VerifyResult =
 export async function verifyOtp(email: string, code: string, purpose: OtpPurpose): Promise<VerifyResult> {
   const key = keyOf(email, purpose);
   const col = otps();
+  const maxAttempts = getOtpMaxAttempts();
   const rec = await col.findOne({ key });
   if (!rec) return { valid: false, reason: "none" };
   if (new Date(rec.expiresAt).getTime() <= Date.now()) {
     await col.deleteOne({ key });
     return { valid: false, reason: "expired" };
   }
-  if (!/^\d{6}$/.test(String(code))) return { valid: false, reason: "invalid", attemptsLeft: Math.max(0, OTP_MAX_ATTEMPTS - Number(rec.attempts || 0)) };
+  if (!/^\d{6}$/.test(String(code))) return { valid: false, reason: "invalid", attemptsLeft: Math.max(0, maxAttempts - Number(rec.attempts || 0)) };
 
   // Count the attempt atomically BEFORE comparing, so parallel guesses can not exceed the limit.
-  const bumped = await col.updateOne({ key, attempts: { $lt: OTP_MAX_ATTEMPTS } }, { $inc: { attempts: 1 } });
+  const bumped = await col.updateOne({ key, attempts: { $lt: maxAttempts } }, { $inc: { attempts: 1 } });
   if (!bumped) {
     await col.deleteOne({ key });
     return { valid: false, reason: "locked" };
@@ -79,7 +106,7 @@ export async function verifyOtp(email: string, code: string, purpose: OtpPurpose
     const removed = await col.deleteOne({ key, hash: bumped.hash });
     return removed === 1 ? { valid: true } : { valid: false, reason: "none" };
   }
-  const left = OTP_MAX_ATTEMPTS - Number(bumped.attempts);
+  const left = maxAttempts - Number(bumped.attempts);
   if (left <= 0) {
     await col.deleteOne({ key });
     return { valid: false, reason: "locked" };

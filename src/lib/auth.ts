@@ -211,18 +211,29 @@ export async function updateAdminProfile(
 }
 
 // ---------------------------------------------------------------- login throttling per account
-const MAX_FAILS = 8;
-const LOCK_MS = 15 * 60_000;
+const getMaxFails = () => {
+  if (process.env.DISABLE_RATE_LIMIT === "true" || process.env.RATE_LIMIT_DISABLED === "true") return 99999;
+  const v = Number(process.env.ACCOUNT_LOCK_MAX_FAILS);
+  return !isNaN(v) && v > 0 ? v : 8;
+};
+
+const getLockMs = () => {
+  const v = Number(process.env.ACCOUNT_LOCK_DURATION_MIN);
+  return !isNaN(v) && v > 0 ? v * 60_000 : 15 * 60_000;
+};
 
 export async function isLocked(user: AdminUserRecord) {
+  if (process.env.DISABLE_RATE_LIMIT === "true" || process.env.RATE_LIMIT_DISABLED === "true") return false;
   return !!user.lockedUntil && user.lockedUntil > Date.now();
 }
+
 export async function recordLoginFailure(email: string) {
   const u = await users().updateOne({ email }, { $inc: { failedLogins: 1 } });
-  if (u && Number(u.failedLogins) >= MAX_FAILS) {
-    await users().updateOne({ email }, { $set: { lockedUntil: Date.now() + LOCK_MS, failedLogins: 0 } });
+  if (u && Number(u.failedLogins) >= getMaxFails()) {
+    await users().updateOne({ email }, { $set: { lockedUntil: Date.now() + getLockMs(), failedLogins: 0 } });
   }
 }
+
 export async function recordLoginSuccess(email: string) {
   await users().updateOne({ email }, { $set: { failedLogins: 0 }, $unset: { lockedUntil: 1 } });
 }

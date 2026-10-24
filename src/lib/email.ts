@@ -30,30 +30,50 @@ const g = globalThis as any;
 /** Tests can replace the transport entirely. */
 export function __setMailSender(s: Sender | null) { g.__sorathMailSender = s; }
 
+function cleanEnv(val?: string): string {
+  if (!val) return "";
+  return val.trim().replace(/^['"]|['"]$/g, "");
+}
+
 function driver(): "smtp" | "file" | "none" {
-  const d = process.env.EMAIL_DRIVER;
+  const d = cleanEnv(process.env.EMAIL_DRIVER);
   if (d === "file" && !isProd()) return "file";
-  if (d === "smtp" || (!d && process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)) return "smtp";
+  const host = cleanEnv(process.env.SMTP_HOST);
+  const user = cleanEnv(process.env.SMTP_USER);
+  const pass = cleanEnv(process.env.SMTP_PASS);
+  if (d === "smtp" || (!d && host && user && pass)) return "smtp";
   if (!d && !isProd()) return "file";
   return "none";
 }
 
 export const mailConfigured = () => driver() !== "none";
 
-let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
-function smtp() {
-  if (transporter) return transporter;
-  const host = process.env.SMTP_HOST, user = process.env.SMTP_USER, pass = process.env.SMTP_PASS;
+function getSmtpTransport() {
+  const host = cleanEnv(process.env.SMTP_HOST);
+  const user = cleanEnv(process.env.SMTP_USER);
+  const pass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, ""); // strip accidental spaces in app passwords
   if (!host || !user || !pass) return null;
-  const port = Number(process.env.SMTP_PORT || 587);
-  transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass }, connectionTimeout: 10_000, socketTimeout: 15_000 });
-  return transporter;
+
+  const isGmail = host.toLowerCase().includes("gmail") || user.toLowerCase().includes("@gmail.com");
+  const configuredPort = Number(cleanEnv(process.env.SMTP_PORT) || 0);
+  const port = configuredPort || (isGmail ? 465 : 587);
+  const secure = port === 465;
+
+  return nodemailer.createTransport({
+    host: isGmail && !host ? "smtp.gmail.com" : host,
+    port,
+    secure,
+    auth: { user, pass },
+    connectionTimeout: 12_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+  });
 }
 
 export async function sendMail(m: MailInput): Promise<MailResult> {
   if (g.__sorathMailSender) return g.__sorathMailSender(m);
   const d = driver();
-  if (d === "none") return { success: false, error: "Email delivery is not configured (set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)." };
+  if (d === "none") return { success: false, error: "Email delivery is not configured (set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in production environment variables)." };
   if (d === "file") {
     const dir = process.env.MAIL_OUTBOX_DIR || path.join(process.cwd(), ".mail-outbox");
     fs.mkdirSync(dir, { recursive: true });
@@ -62,18 +82,19 @@ export async function sendMail(m: MailInput): Promise<MailResult> {
     console.log(`[mail] captured ${id}.json (EMAIL_DRIVER=file)`);
     return { success: true, messageId: id };
   }
-  const t = smtp();
-  if (!t) return { success: false, error: "SMTP credentials are incomplete." };
-  const rawFrom = process.env.SMTP_FROM;
+  const t = getSmtpTransport();
+  if (!t) return { success: false, error: "SMTP credentials are incomplete (check SMTP_HOST, SMTP_USER, SMTP_PASS)." };
+  const rawFrom = cleanEnv(process.env.SMTP_FROM);
+  const user = cleanEnv(process.env.SMTP_USER);
   const from = (rawFrom && !rawFrom.includes("your-domain.example"))
     ? rawFrom
-    : `"Luxora PG" <${process.env.SMTP_USER || "stay@luxorapg.com"}>`;
+    : `"Luxora PG" <${user || "stay@luxorapg.com"}>`;
   try {
     const info = await t.sendMail({ from, to: m.to, subject: m.subject, text: m.text, html: m.html, headers: m.headers });
     return { success: true, messageId: info.messageId };
   } catch (err: any) {
-    console.error("[mail] delivery failed:", err?.code || err?.message);
-    return { success: false, error: err?.message || "Delivery failed" };
+    console.error("[mail] delivery failed:", err?.code || err?.message, err);
+    return { success: false, error: err?.message || err?.code || "Delivery failed" };
   }
 }
 

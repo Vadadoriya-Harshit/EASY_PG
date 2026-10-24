@@ -73,9 +73,11 @@ export async function POST(req: Request) {
       const sent = await sendOtpEmail({ to: user.email, otp: issued.code, userName: user.name });
       if (!sent.success) {
         await clearOtp(user.email, "login");
-        console.error("[auth] OTP e-mail could not be delivered");
-        await auditLog({ actor: user.email, action: "auth.otp.send-failed", ip });
-        return jsonError("We could not send the verification email. Please try again, or contact the site owner if this keeps happening.", 503);
+        console.error("[auth] OTP e-mail could not be delivered:", sent.error);
+        await auditLog({ actor: user.email, action: "auth.otp.send-failed", ip, meta: { error: sent.error || "unknown" } });
+        return jsonError("We could not send the verification email. Please try again, or contact the site owner if this keeps happening.", 503, {
+          reason: sent.error || "delivery_failed",
+        });
       }
       await auditLog({ actor: user.email, action: "auth.otp.sent", ip });
     } else if (issued.reason === "cooldown") {

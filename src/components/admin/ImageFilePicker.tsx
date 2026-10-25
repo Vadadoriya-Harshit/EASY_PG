@@ -76,10 +76,10 @@ export async function uploadMultipleImagesToServer(
 export function processImageFile(file: File, maxDim = 1200, quality = 0.82): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error("Failed to read image file"));
     reader.onload = (e) => {
       const img = new window.Image();
-      img.onerror = reject;
+      img.onerror = () => reject(new Error("Failed to load image element"));
       img.onload = () => {
         let width = img.width;
         let height = img.height;

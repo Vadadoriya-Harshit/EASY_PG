@@ -9,7 +9,8 @@ export const runtime = "nodejs";
 /** Revokes the caller's own server-side session and clears the cookies. Safe to call when already signed out. */
 export async function POST(req: Request) {
   try {
-    const decoded = await verifyToken(cookies().get(COOKIE)?.value);
+    const cookieStore = await cookies();
+    const decoded = await verifyToken(cookieStore.get(COOKIE)?.value);
     if (decoded) {
       await terminateSessionById(decoded.sid);
       await auditLog({ actor: decoded.email, action: "auth.logout", ip: clientIp(req) });

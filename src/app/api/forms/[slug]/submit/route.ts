@@ -15,14 +15,15 @@ const MAX_BODY = 12 * 1024 * 1024;
  *   file:<fieldId>  one part per attached file
  * Everything is validated again here from the stored form definition; nothing the browser claims is trusted.
  */
-export async function POST(req: Request, { params }: { params: { slug: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const ip = clientIp(req);
   try {
     const lim = await rateLimitShared(`form-submit:${ip}`, 12, 10 * 60_000);
     if (!lim.allowed) return jsonError("Too many submissions. Please wait a few minutes and try again.", 429, { retryAfterSec: lim.retryAfterSec });
 
-    if (!/^[a-z0-9-]{2,60}$/.test(params.slug)) return jsonError("This form does not exist.", 404);
-    const def = await getForm(params.slug, { publishedOnly: true });
+    if (!/^[a-z0-9-]{2,60}$/.test(slug)) return jsonError("This form does not exist.", 404);
+    const def = await getForm(slug, { publishedOnly: true });
     if (!def) return jsonError("This form is not available right now.", 404);
 
     const len = Number(req.headers.get("content-length") || 0);

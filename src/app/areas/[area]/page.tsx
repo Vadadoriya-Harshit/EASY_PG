@@ -10,8 +10,9 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 
 export const revalidate = 60;
 
-export async function generateMetadata({ params }: { params: { area: string } }): Promise<Metadata> {
-  const a = await getArea(params.area);
+export async function generateMetadata({ params }: { params: Promise<{ area: string }> }): Promise<Metadata> {
+  const { area } = await params;
+  const a = await getArea(area);
   if (!a) return {};
   return {
     title: `PG in ${a.name}, ${a.city}: Boys & Girls PG`,
@@ -20,8 +21,9 @@ export async function generateMetadata({ params }: { params: { area: string } })
   };
 }
 
-export default async function AreaPage({ params }: { params: { area: string } }) {
-  const a = await getArea(params.area);
+export default async function AreaPage({ params }: { params: Promise<{ area: string }> }) {
+  const { area } = await params;
+  const a = await getArea(area);
   if (!a) notFound();
   const props = (await listProperties()).filter((p) => p.area === a.slug);
   const places = props.flatMap((p) => p.nearby).slice(0, 6);

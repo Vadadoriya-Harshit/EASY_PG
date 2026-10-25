@@ -83,7 +83,7 @@ export const viewport: Viewport = {
   themeColor: [{ media: "(prefers-color-scheme: dark)", color: "#101426" }, { media: "(prefers-color-scheme: light)", color: "#FAF8F4" }],
 };
 
-const themeScript = `(function(){try{var t=localStorage.getItem('luxora-theme')||localStorage.getItem('sorath-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);var p=localStorage.getItem('luxora-palette')||localStorage.getItem('sorath-palette')||'royal';document.documentElement.setAttribute('data-palette',p);}catch(e){}})();`;
+const themeScript = `(function(){try{var t=localStorage.getItem('luxora-theme')||localStorage.getItem('sorath-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);var p=localStorage.getItem('luxora-palette')||localStorage.getItem('sorath-palette')||'royal';document.documentElement.setAttribute('data-palette',p);}catch(e){}if(typeof window!=='undefined'){window.addEventListener('unhandledrejection',function(e){if(e.reason&&(e.reason instanceof Event||Object.prototype.toString.call(e.reason)==='[object Event]')){e.preventDefault();console.warn('Prevented unhandled DOM Event overlay:',e.reason);}});}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const demo = isDemoStore();

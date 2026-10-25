@@ -17,7 +17,7 @@ export const inquirySchema = z.object({
   message: z.string().trim().max(500).optional().or(z.literal("")),
   visitDate: z.string().max(20).optional().or(z.literal("")),
   visitTime: z.string().max(20).optional().or(z.literal("")),
-  consent: z.literal(true, { errorMap: () => ({ message: "Please accept to continue" }) }),
+  consent: z.literal(true, { message: "Please accept to continue" }),
   website: z.string().max(0).optional(), // honeypot
 }).superRefine((d, ctx) => {
   if (d.kind !== "visit") return;
@@ -154,7 +154,7 @@ export const publicSubscribeSchema = z.object({
   preferredArea: z.string().max(80).optional(),
   preferredProperty: z.string().max(120).optional(),
   sharingType: z.string().max(20).optional(),
-  consent: z.literal(true, { errorMap: () => ({ message: "Please tick the box to agree to receive vacancy emails." }) }),
+  consent: z.literal(true, { message: "Please tick the box to agree to receive vacancy emails." }),
   source: z.string().max(40).optional(),
   website: z.string().max(0).optional(), // honeypot
 });

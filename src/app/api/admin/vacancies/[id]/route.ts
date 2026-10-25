@@ -8,16 +8,17 @@ export const runtime = "nodejs";
 
 const ID = /^vs_[a-f0-9]{18}$/;
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const a = await requireAdmin();
   if ("res" in a) return a.res;
-  if (!ID.test(params.id)) return jsonError("Invalid subscriber.", 400);
+  if (!ID.test(id)) return jsonError("Invalid subscriber.", 400);
   const patch = await readJson(req, 5_000);
   if (!patch || typeof patch !== "object") return jsonError("Invalid request.", 400);
   try {
-    const updated = await patchSubscriber(params.id, patch);
+    const updated = await patchSubscriber(id, patch);
     if (!updated) return jsonError("Subscriber not found.", 404);
-    await auditLog({ actor: a.session.email, action: "vacancy.subscriber.update", target: params.id, ip: clientIp(req) });
+    await auditLog({ actor: a.session.email, action: "vacancy.subscriber.update", target: id, ip: clientIp(req) });
     return noStore(NextResponse.json({ ok: true, subscriber: updated }));
   } catch (e: any) {
     console.error("[vacancy] update failed:", e?.message);
@@ -25,14 +26,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const a = await requireAdmin();
   if ("res" in a) return a.res;
-  if (!ID.test(params.id)) return jsonError("Invalid subscriber.", 400);
+  if (!ID.test(id)) return jsonError("Invalid subscriber.", 400);
   try {
-    const removed = await deleteSubscriber(params.id);
+    const removed = await deleteSubscriber(id);
     if (!removed) return jsonError("Subscriber not found.", 404);
-    await auditLog({ actor: a.session.email, action: "vacancy.subscriber.delete", target: params.id, ip: clientIp(req) });
+    await auditLog({ actor: a.session.email, action: "vacancy.subscriber.delete", target: id, ip: clientIp(req) });
     return noStore(NextResponse.json({ ok: true }));
   } catch (e: any) {
     console.error("[vacancy] delete failed:", e?.message);

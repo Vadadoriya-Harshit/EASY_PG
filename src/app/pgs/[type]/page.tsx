@@ -40,16 +40,18 @@ export async function generateMetadata({
   params,
   searchParams,
 }: {
-  params: { type: string };
-  searchParams: Record<string, string>;
+  params: Promise<{ type: string }>;
+  searchParams: Promise<Record<string, string>>;
 }): Promise<Metadata> {
-  const c = COPY[params.type as "boys" | "girls"];
+  const { type } = await params;
+  const sp = await searchParams;
+  const c = COPY[type as "boys" | "girls"];
   if (!c) return {};
   return {
     title: `${c.title}: Rent, Rooms & Facilities`,
     description: c.intro,
-    alternates: { canonical: `/pgs/${params.type}` },
-    robots: Object.keys(searchParams).length ? { index: false, follow: true } : undefined,
+    alternates: { canonical: `/pgs/${type}` },
+    robots: Object.keys(sp || {}).length ? { index: false, follow: true } : undefined,
   };
 }
 
@@ -57,10 +59,12 @@ export default async function TypePage({
   params,
   searchParams,
 }: {
-  params: { type: string };
-  searchParams: Record<string, string | string[] | undefined>;
+  params: Promise<{ type: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const type = params.type as "boys" | "girls";
+  const { type: rawType } = await params;
+  const sp = await searchParams;
+  const type = rawType as "boys" | "girls";
   if (!COPY[type]) notFound();
   const c = COPY[type];
   const [props, areas] = await Promise.all([listProperties(), listAreas()]);
@@ -97,7 +101,7 @@ export default async function TypePage({
         <PGFinder
           properties={props.filter((p) => p.gender === type)}
           areas={areas}
-          initial={parseFilters(searchParams, type)}
+          initial={parseFilters(sp, type)}
           lockGender={type}
         />
       </div>

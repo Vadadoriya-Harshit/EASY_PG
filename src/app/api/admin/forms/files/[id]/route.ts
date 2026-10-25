@@ -5,11 +5,12 @@ import { jsonError } from "@/lib/http";
 export const runtime = "nodejs";
 
 /** Uploaded files are private: admin-only, always downloaded (never rendered inline), never sniffed by the browser. */
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const a = await requireAdmin();
   if ("res" in a) return a.res;
-  if (!/^file_[a-f0-9]{16}$/.test(params.id)) return jsonError("Invalid file.", 400);
-  const f = await getStoredFile(params.id);
+  if (!/^file_[a-f0-9]{16}$/.test(id)) return jsonError("Invalid file.", 400);
+  const f = await getStoredFile(id);
   if (!f) return jsonError("File not found.", 404);
   return new Response(new Uint8Array(f.buffer), {
     headers: {

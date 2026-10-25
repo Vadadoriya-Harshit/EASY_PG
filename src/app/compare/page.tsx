@@ -8,8 +8,9 @@ import type { Property } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Compare PGs", robots: { index: false } };
 
-export default async function Compare({ searchParams }: { searchParams: { ids?: string } }) {
-  const slugs = (searchParams.ids || "").split(",").filter(Boolean).slice(0, 3);
+export default async function Compare({ searchParams }: { searchParams: Promise<{ ids?: string }> }) {
+  const sp = await searchParams;
+  const slugs = (sp.ids || "").split(",").filter(Boolean).slice(0, 3);
   const props = (await Promise.all(slugs.map((s) => getProperty(s)))).filter(Boolean) as Property[];
   const areas = await listAreas();
   const aName = (s: string) => areas.find((a) => a.slug === s)?.name || s;

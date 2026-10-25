@@ -23,8 +23,9 @@ export async function generateStaticParams() {
   return (await listProperties()).map((p) => ({ slug: p.slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const p = await getProperty(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const p = await getProperty(slug);
   if (!p) return {};
   const a = await getArea(p.area);
   const r = rentRange(p.rooms);
@@ -43,8 +44,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 const FAC_LABEL = { included: "Included", paid: "Paid extra", "not-available": "Not available" } as const;
 
-export default async function PropertyPage({ params }: { params: { slug: string } }) {
-  const p = await getProperty(params.slug);
+export default async function PropertyPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const p = await getProperty(slug);
   if (!p) notFound();
   const area = await getArea(p.area);
   const r = rentRange(p.rooms);

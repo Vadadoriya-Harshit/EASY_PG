@@ -18,9 +18,8 @@ const PUBLIC_PATHS = new Set(["/admin/login", "/admin/verify-otp"]);
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const s = await getSession();
 
-  // Only the sign-in pages may render without a live session. Everything else under /admin is guarded here too
-  // (in addition to each page and API route), so a forgotten check on a new page can not expose it.
-  if (!s && !PUBLIC_PATHS.has(headers().get("x-pathname") || "")) redirect("/admin/login");
+  const headerList = await headers();
+  if (!s && !PUBLIC_PATHS.has(headerList.get("x-pathname") || "")) redirect("/admin/login");
 
   if (!s) {
     return (

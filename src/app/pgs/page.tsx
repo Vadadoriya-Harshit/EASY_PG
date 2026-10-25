@@ -7,8 +7,9 @@ import { parseFilters } from "@/lib/filter";
 
 export const revalidate = 60;
 
-export async function generateMetadata({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }): Promise<Metadata> {
-  const filtered = Object.keys(searchParams).length > 0;
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
+  const sp = await searchParams;
+  const filtered = Object.keys(sp || {}).length > 0;
   return {
     title: "PG in Ahmedabad: Boys & Girls PG Listings",
     description: "Browse every Luxora PG in Ahmedabad. Filter by locality, budget, single / double / triple sharing, AC, facilities and metro distance.",
@@ -17,14 +18,15 @@ export async function generateMetadata({ searchParams }: { searchParams: Record<
   };
 }
 
-export default async function PGs({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+export default async function PGs({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [props, areas] = await Promise.all([listProperties(), listAreas()]);
+  const sp = await searchParams;
   return (
     <>
       <PageHeader title="Find your PG" intro="Filter by area, budget and sharing type. Every filter works with the others." />
       <div className="container-x py-10">
         <DemoNotice show={isDemoStore()} />
-        <PGFinder properties={props} areas={areas} initial={parseFilters(searchParams)} />
+        <PGFinder properties={props} areas={areas} initial={parseFilters(sp)} />
       </div>
     </>
   );

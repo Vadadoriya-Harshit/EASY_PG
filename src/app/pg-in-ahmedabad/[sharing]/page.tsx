@@ -20,8 +20,9 @@ async function load(slug: SharingSlug) {
   return { s, list, areas, rent: rentSummary(list) };
 }
 
-export async function generateMetadata({ params }: { params: { sharing: string } }): Promise<Metadata> {
-  const slug = params.sharing as SharingSlug;
+export async function generateMetadata({ params }: { params: Promise<{ sharing: string }> }): Promise<Metadata> {
+  const { sharing } = await params;
+  const slug = sharing as SharingSlug;
   if (!SHARING_PAGES[slug]) return {};
   const { s, list, rent } = await load(slug);
   return {
@@ -35,8 +36,9 @@ export async function generateMetadata({ params }: { params: { sharing: string }
   };
 }
 
-export default async function SharingPage({ params }: { params: { sharing: string } }) {
-  const slug = params.sharing as SharingSlug;
+export default async function SharingPage({ params }: { params: Promise<{ sharing: string }> }) {
+  const { sharing } = await params;
+  const slug = sharing as SharingSlug;
   if (!SHARING_PAGES[slug]) notFound();
   const { s, list, areas, rent } = await load(slug);
   const areaName = Object.fromEntries(areas.map((a) => [a.slug, a.name]));

@@ -290,7 +290,8 @@ export async function isSessionActive(email: string, sid: string): Promise<boole
 /** Full server-side session lookup. Role, name, status all come from the database, never from the token. */
 /** De-duplicated per request: layout + page + handlers share one lookup. */
 export const getSession = cache(async (): Promise<AdminSession | null> => {
-  const token = cookies().get(COOKIE)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE)?.value;
   return sessionFromToken(token);
 });
 

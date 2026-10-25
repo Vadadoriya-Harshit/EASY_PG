@@ -9,19 +9,21 @@ export const dynamic = "force-dynamic";
 
 const SLUG = /^[a-z0-9-]{2,60}$/;
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const f = SLUG.test(params.slug) ? await getForm(params.slug, { publishedOnly: true }).catch(() => null) : null;
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const f = SLUG.test(slug) ? await getForm(slug, { publishedOnly: true }).catch(() => null) : null;
   return {
     title: f?.title || "Form",
     description: f?.description || undefined,
-    alternates: { canonical: `/forms/${params.slug}` },
+    alternates: { canonical: `/forms/${slug}` },
     robots: { index: false, follow: true }, // utility pages, not search landing pages
   };
 }
 
-export default async function PublicFormPage({ params }: { params: { slug: string } }) {
-  if (!SLUG.test(params.slug)) notFound();
-  const def = await getForm(params.slug, { publishedOnly: true });
+export default async function PublicFormPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  if (!SLUG.test(slug)) notFound();
+  const def = await getForm(slug, { publishedOnly: true });
   if (!def) notFound();
   const sets = await resolveOptionSets(def);
   return (

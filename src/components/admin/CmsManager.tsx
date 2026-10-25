@@ -51,6 +51,7 @@ import ImageFilePicker from "./ImageFilePicker";
 import { SortableList, SortableItem, ReorderControls } from "./Sortable";
 import DynamicIcon, { AVAILABLE_ICON_NAMES } from "@/components/DynamicIcon";
 import UniqueDeleteModal from "./UniqueDeleteModal";
+import { showAlert, showConfirm, showToast } from "@/components/FeedbackDialog";
 
 type PageTab = "nav" | "home" | "layout" | "about" | "facilities" | "areas" | "faq" | "contact" | "testimonials";
 
@@ -159,15 +160,28 @@ export default function CmsManager({ canReset = false }: { canReset?: boolean })
     }
   };
 
-  const handleDiscard = () => {
+  const handleDiscard = async () => {
     if (!dirty) return;
-    if (!confirm("Discard all unsaved changes and go back to the last saved version?")) return;
+    const ok = await showConfirm({
+      title: "Discard Changes",
+      message: "Discard all unsaved changes and restore the last saved version?",
+      tone: "warning",
+      confirmLabel: "Discard Changes",
+    });
+    if (!ok) return;
     try { setCms(JSON.parse(savedJson)); } catch {}
     setSaveErr("");
   };
 
   const handleReset = async () => {
-    if (!confirm("Reset ALL website content, navigation and media to factory defaults? This replaces what is currently live.")) return;
+    const ok = await showConfirm({
+      title: "Factory Reset Website Content",
+      message: "Reset ALL website content, navigation and media to factory defaults? This replaces what is currently live.",
+      tone: "danger",
+      danger: true,
+      confirmLabel: "Reset to Factory Defaults",
+    });
+    if (!ok) return;
     setSaveErr("");
     try {
       const res = await fetch("/api/admin/cms/content", { method: "DELETE" });
@@ -203,8 +217,15 @@ export default function CmsManager({ canReset = false }: { canReset?: boolean })
     }));
   };
 
-  const removeNavGroup = (gIdx: number) => {
-    if (!confirm("Delete this entire menu group?")) return;
+  const removeNavGroup = async (gIdx: number) => {
+    const ok = await showConfirm({
+      title: "Delete Menu Group",
+      message: "Delete this entire navigation menu group and all links within it?",
+      tone: "danger",
+      danger: true,
+      confirmLabel: "Delete Group",
+    });
+    if (!ok) return;
     setCms((prev) => ({
       ...prev,
       navigation: { ...prev.navigation, groups: prev.navigation.groups.filter((_, i) => i !== gIdx) },
@@ -281,9 +302,13 @@ export default function CmsManager({ canReset = false }: { canReset?: boolean })
     }));
   };
 
-  const removeSlide = (index: number) => {
+  const removeSlide = async (index: number) => {
     if (cms.hero.slides.length <= 1) {
-      alert("At least one slide is required for the visual hero.");
+      await showAlert({
+        title: "Slide Required",
+        message: "At least one slide is required for the visual hero background.",
+        tone: "warning",
+      });
       return;
     }
     setCms((prev) => ({
@@ -354,8 +379,15 @@ export default function CmsManager({ canReset = false }: { canReset?: boolean })
     }));
   };
 
-  const removeFaqCategory = (cIdx: number) => {
-    if (!confirm("Delete this entire category and all its questions?")) return;
+  const removeFaqCategory = async (cIdx: number) => {
+    const ok = await showConfirm({
+      title: "Delete FAQ Category",
+      message: "Delete this entire FAQ category and all its questions? This cannot be undone.",
+      tone: "danger",
+      danger: true,
+      confirmLabel: "Delete Category",
+    });
+    if (!ok) return;
     setCms((prev) => ({
       ...prev,
       faq: { ...prev.faq, categories: prev.faq.categories.filter((_, i) => i !== cIdx) },
@@ -1354,9 +1386,25 @@ export default function CmsManager({ canReset = false }: { canReset?: boolean })
                       type="button"
                       title="Delete"
                       aria-label="Delete amenity"
-                      onClick={() => {
-                        if (cms.amenities.length <= 1) return alert("Keep at least one amenity.");
-                        if (confirm(`Delete "${item.title}"?`)) setCms((p) => ({ ...p, amenities: p.amenities.filter((_, i) => i !== idx) }));
+                      onClick={async () => {
+                        if (cms.amenities.length <= 1) {
+                          await showAlert({
+                            title: "Amenity Required",
+                            message: "Keep at least one amenity in the showcase.",
+                            tone: "warning",
+                          });
+                          return;
+                        }
+                        const ok = await showConfirm({
+                          title: "Delete Amenity",
+                          message: `Are you sure you want to delete "${item.title}"?`,
+                          tone: "danger",
+                          danger: true,
+                          confirmLabel: "Delete",
+                        });
+                        if (ok) {
+                          setCms((p) => ({ ...p, amenities: p.amenities.filter((_, i) => i !== idx) }));
+                        }
                       }}
                       className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-500/20 bg-surface text-red-400 hover:text-red-500"
                     >

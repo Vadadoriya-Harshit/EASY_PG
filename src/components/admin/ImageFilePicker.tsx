@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { UploadCloud, Image as ImageIcon, Trash2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { showAlert } from "@/components/FeedbackDialog";
 
 interface ImageFilePickerProps {
   value?: string;
@@ -133,7 +134,11 @@ export default function ImageFilePicker({
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      alert("Please choose a valid image file (JPG, PNG, WebP).");
+      await showAlert({
+        title: "Invalid File Type",
+        message: "Please choose a valid image file (JPG, PNG, or WebP).",
+        tone: "warning",
+      });
       return;
     }
     setProcessing(true);
@@ -142,7 +147,11 @@ export default function ImageFilePicker({
       onChange(url);
     } catch (err) {
       console.error("Image processing error:", err);
-      alert("Failed to process photo.");
+      await showAlert({
+        title: "Upload Failed",
+        message: "Failed to process and upload the photo. Please try a different image.",
+        tone: "danger",
+      });
     } finally {
       setProcessing(false);
     }

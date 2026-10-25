@@ -224,3 +224,37 @@ export async function sendVacancyAlertEmail(o: VacancyMailInput): Promise<MailRe
     headers: { "List-Unsubscribe": `<${o.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
   });
 }
+
+export interface VisitConfirmMailInput {
+  to: string;
+  name: string;
+  propertyName: string;
+  propertyAddress?: string;
+  visitDate: string;
+  visitTime?: string;
+  coordinatorPhone?: string;
+}
+
+/** Email notification sent to resident when a PG walkthrough visit is scheduled */
+export async function sendVisitConfirmationEmail(o: VisitConfirmMailInput): Promise<MailResult> {
+  const body =
+    p(`Hi <strong>${escapeHtml(o.name)}</strong>,`) +
+    p(`Your visit to <strong>${escapeHtml(o.propertyName)}</strong> has been scheduled and confirmed!`) +
+    `<div style="margin:16px 0;padding:16px 20px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:12px;font-size:14px;line-height:1.8;color:#78350F;">
+      <strong>Scheduled Date:</strong> ${escapeHtml(o.visitDate)}<br/>
+      ${o.visitTime ? `<strong>Time Slot:</strong> ${escapeHtml(o.visitTime)}<br/>` : ""}
+      ${o.propertyAddress ? `<strong>Address:</strong> ${escapeHtml(o.propertyAddress)}<br/>` : ""}
+      ${o.coordinatorPhone ? `<strong>Coordinator Contact:</strong> ${escapeHtml(o.coordinatorPhone)}` : ""}
+    </div>` +
+    p("Please feel free to call our coordinator when you are on your way or if you need help finding the building. We look forward to welcoming you!");
+  return sendMail({
+    to: o.to,
+    subject: `Visit Scheduled: ${o.propertyName} on ${o.visitDate}`,
+    text: `Hi ${o.name}, your visit to ${o.propertyName} is scheduled for ${o.visitDate}${o.visitTime ? ` at ${o.visitTime}` : ""}.\nCoordinator: ${o.coordinatorPhone || "Available at PG"}`,
+    html: shell({
+      preheader: `Your visit to ${o.propertyName} is confirmed for ${o.visitDate}`,
+      heading: "Visit Scheduled & Confirmed",
+      bodyHtml: body,
+    }),
+  });
+}

@@ -11,6 +11,7 @@ import { CompareProvider, CompareBar } from "@/components/Compare";
 import WhatsAppFab from "@/components/WhatsAppFab";
 import ThemeCustomizerSideIcon from "@/components/ThemeCustomizerSideIcon";
 import RouteTransitionLoader from "@/components/RouteTransitionLoader";
+import FeedbackDialogHost from "@/components/FeedbackDialog";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -110,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense fallback={null}>
             <RouteTransitionLoader />
           </Suspense>
+          <FeedbackDialogHost />
         </CompareProvider>
       </body>
     </html>

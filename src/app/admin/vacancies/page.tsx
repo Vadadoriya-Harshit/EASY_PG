@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BellRing, CheckCircle2, Clock, Mail, MailX, Plus, RefreshCw, Search, Send, Trash2, UserX, X, AlertCircle } from "lucide-react";
 import { fmtDate } from "@/lib/utils";
+import { showConfirm } from "@/components/FeedbackDialog";
 
 type SubStatus = "pending" | "active" | "unsubscribed";
 interface Subscriber {
@@ -87,14 +88,27 @@ export default function AdminVacanciesPage() {
   }), [subs, events]);
 
   const deactivate = async (v: Subscriber) => {
-    if (!confirm(`Stop sending alerts to ${v.email}?`)) return;
+    const ok = await showConfirm({
+      title: "Deactivate Subscriber",
+      message: `Stop sending vacancy alerts to ${v.email}? They will no longer receive automated notifications.`,
+      tone: "warning",
+      confirmLabel: "Stop Alerts",
+    });
+    if (!ok) return;
     const r = await api(`/api/admin/vacancies/${v.id}`, { method: "PATCH", body: JSON.stringify({ status: "unsubscribed" }) });
     if (r.ok) { setSubs((p) => p.map((x) => (x.id === v.id ? { ...x, status: "unsubscribed" } : x))); notify("ok", "Subscriber deactivated."); }
     else notify("err", r.data?.error || "Could not update.");
   };
 
   const remove = async (v: Subscriber) => {
-    if (!confirm(`Permanently delete ${v.email} and their notification history?`)) return;
+    const ok = await showConfirm({
+      title: "Delete Subscriber",
+      message: `Permanently delete ${v.email} and their notification history? This cannot be undone.`,
+      tone: "danger",
+      danger: true,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     const r = await api(`/api/admin/vacancies/${v.id}`, { method: "DELETE" });
     if (r.ok) { setSubs((p) => p.filter((x) => x.id !== v.id)); notify("ok", "Subscriber deleted."); }
     else notify("err", r.data?.error || "Could not delete.");

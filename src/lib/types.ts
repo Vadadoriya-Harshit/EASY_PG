@@ -85,6 +85,7 @@ export interface Inquiry {
   kind: "inquiry" | "visit";
   name: string;
   phone: string;
+  email?: string;
   propertySlug?: string;
   areaSlug?: string;
   roomType?: string;

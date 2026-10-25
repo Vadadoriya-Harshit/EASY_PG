@@ -32,6 +32,7 @@ import { SortableList, SortableItem, ReorderControls } from "./Sortable";
 import { cn, inr } from "@/lib/utils";
 import { Compass, Upload, Image as ImageIcon, AlertTriangle, RefreshCw } from "lucide-react";
 import UniqueDeleteModal from "./UniqueDeleteModal";
+import { showAlert } from "@/components/FeedbackDialog";
 
 interface PropertiesManagerProps {
   initialProps: Property[];
@@ -317,7 +318,11 @@ export default function PropertiesManager({ initialProps, areas }: PropertiesMan
       setTimeout(() => setSuccessToast(""), 4000);
       setDeleteConfirmProp(null);
     } catch (err: any) {
-      alert(err.message || "Could not delete property.");
+      await showAlert({
+        title: "Delete Failed",
+        message: err.message || "Could not delete property.",
+        tone: "danger",
+      });
     } finally {
       setIsDeleting(false);
     }

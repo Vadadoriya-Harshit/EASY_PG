@@ -10,6 +10,7 @@ import ProgressRing from "@/components/ProgressRing";
 import DynamicForm from "@/components/forms/DynamicForm";
 import { SortableList, SortableItem, ReorderControls } from "./Sortable";
 import { cn, slugify } from "@/lib/utils";
+import { showConfirm } from "@/components/FeedbackDialog";
 import {
   FIELD_META, FIELD_TYPES, FILE_TYPES, MAX_FILES_PER_FIELD, MAX_FILE_MB, OPTION_SOURCES, OPTION_SOURCE_LABEL, blankField, formDefSchema,
   optionsFor, type FieldType, type FormDef, type FormField, type OptionSets,
@@ -67,10 +68,17 @@ export default function FormBuilder({ initial, optionSets, isNew: isNewProp }: P
       return { ...f, fields };
     });
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
     const field = form.fields.find((x) => x.id === id)!;
     const dependants = form.fields.filter((x) => x.condition?.fieldId === id);
-    if (!confirm(`Delete "${field.label}"?${dependants.length ? ` ${dependants.length} field(s) show only when this one has a value; their conditions will be cleared.` : ""}`)) return;
+    const ok = await showConfirm({
+      title: "Delete Field",
+      message: `Delete "${field.label}"?${dependants.length ? ` ${dependants.length} field(s) show only when this one has a value; their conditions will be cleared.` : ""}`,
+      tone: "danger",
+      danger: true,
+      confirmLabel: "Delete Field",
+    });
+    if (!ok) return;
     setForm((f) => ({ ...f, fields: f.fields.filter((x) => x.id !== id).map((x) => (x.condition?.fieldId === id ? { ...x, condition: null } : x)) }));
     if (selected === id) setSelected(null);
   };
@@ -114,7 +122,14 @@ export default function FormBuilder({ initial, optionSets, isNew: isNewProp }: P
   };
 
   const del = async () => {
-    if (!confirm(`Delete the form "${form.title}" and ALL of its responses? This can not be undone.`)) return;
+    const ok = await showConfirm({
+      title: "Delete Form",
+      message: `Delete the form "${form.title}" and ALL of its responses? This can not be undone.`,
+      tone: "danger",
+      danger: true,
+      confirmLabel: "Delete Form",
+    });
+    if (!ok) return;
     const res = await fetch(`/api/admin/forms/${form.slug}`, { method: "DELETE" });
     if (res.ok) router.replace("/admin/forms");
     else setErr((await res.json().catch(() => ({}))).error || "Could not delete.");
@@ -448,7 +463,14 @@ function Responses({ slug }: { slug: string }) {
     fetch(`/api/admin/forms/${slug}/submissions`).then(async (r) => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "Could not load responses."); setRows(d.submissions); }).catch((e) => setErr(e.message));
   }, [slug]);
   const del = async (id: string) => {
-    if (!confirm("Delete this response and its files permanently?")) return;
+    const ok = await showConfirm({
+      title: "Delete Submission",
+      message: "Delete this response and its files permanently? This cannot be undone.",
+      tone: "danger",
+      danger: true,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     const r = await fetch(`/api/admin/forms/${slug}/submissions?id=${id}`, { method: "DELETE" });
     if (r.ok) setRows((p) => (p || []).filter((x) => x.id !== id));
   };

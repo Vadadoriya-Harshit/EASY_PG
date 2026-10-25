@@ -35,10 +35,8 @@ function cleanEnv(val?: string): string {
   return val.trim().replace(/^['"]|['"]$/g, "");
 }
 
-function driver(): "resend" | "smtp" | "file" | "none" {
-  if (cleanEnv(process.env.RESEND_API_KEY)) return "resend";
+function driver(): "smtp" | "file" | "none" {
   const d = cleanEnv(process.env.EMAIL_DRIVER);
-  if (d === "resend") return "resend";
   if (d === "file" && !isProd()) return "file";
   const host = cleanEnv(process.env.SMTP_HOST);
   const user = cleanEnv(process.env.SMTP_USER);
@@ -49,39 +47,6 @@ function driver(): "resend" | "smtp" | "file" | "none" {
 }
 
 export const mailConfigured = () => driver() !== "none";
-
-async function sendViaResend(apiKey: string, m: MailInput): Promise<MailResult> {
-  const rawFrom = cleanEnv(process.env.RESEND_FROM);
-  const from = (rawFrom && !rawFrom.includes("your-domain.example"))
-    ? rawFrom
-    : "Luxora PG <onboarding@resend.dev>";
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [m.to],
-        subject: m.subject,
-        html: m.html,
-        text: m.text,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      console.error("[resend] API error:", data);
-      return { success: false, error: data?.message || data?.error || "Resend API delivery failed" };
-    }
-    return { success: true, messageId: data?.id };
-  } catch (err: any) {
-    console.error("[resend] network error:", err?.message);
-    return { success: false, error: err?.message || "Resend network error" };
-  }
-}
 
 function getSmtpTransport() {
   const host = cleanEnv(process.env.SMTP_HOST);
@@ -121,13 +86,8 @@ export async function sendMail(m: MailInput): Promise<MailResult> {
   if (d === "none") {
     return {
       success: false,
-      error: "Email delivery is not configured. In production, set RESEND_API_KEY (recommended) or SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS.",
+      error: "Email delivery is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS.",
     };
-  }
-
-  if (d === "resend") {
-    const key = cleanEnv(process.env.RESEND_API_KEY);
-    return sendViaResend(key, m);
   }
 
   if (d === "file") {

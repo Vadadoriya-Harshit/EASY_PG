@@ -1,4 +1,5 @@
 import type { Area, Inquiry, Property } from "./types";
+import mongoose from "mongoose";
 import { sampleAreas, sampleProperties } from "./sample-data";
 import { AreaModel, EventModel, InquiryModel, PropertyModel, connect } from "./models";
 
@@ -21,7 +22,8 @@ const mem = (): Mem =>
 const clean = <T>(d: any): T => {
   if (!d) return d;
   const { _id, ...rest } = d;
-  return JSON.parse(JSON.stringify(rest));
+  const id = rest.id || (_id ? String(_id) : undefined);
+  return JSON.parse(JSON.stringify({ ...rest, ...(id ? { id } : {}) }));
 };
 
 let loggedInMemoryNotice = false;
@@ -140,10 +142,14 @@ export async function updateInquiry(id: string, patch: Partial<Inquiry>) {
   const updatedAt = new Date().toISOString();
   return await safeDbOp(
     async () => {
-      const cur = clean<Inquiry | null>(await InquiryModel().findOne({ id }).lean());
-      if (!cur) return null;
+      const query = mongoose.Types.ObjectId.isValid(id)
+        ? { $or: [{ id }, { _id: new mongoose.Types.ObjectId(id) }] }
+        : { id };
+      const raw = await InquiryModel().findOne(query).lean();
+      if (!raw) return null;
+      const cur = clean<Inquiry>(raw);
       const next = { ...cur, ...patch, visit: patch.visit ? ({ ...cur.visit, ...patch.visit } as Inquiry["visit"]) : cur.visit, updatedAt };
-      await InquiryModel().replaceOne({ id }, next);
+      await InquiryModel().updateOne(query, { $set: next });
       return next;
     },
     () => {
@@ -153,6 +159,25 @@ export async function updateInquiry(id: string, patch: Partial<Inquiry>) {
       const cur = m.inquiries[i];
       m.inquiries[i] = { ...cur, ...patch, visit: patch.visit ? ({ ...cur.visit, ...patch.visit } as Inquiry["visit"]) : cur.visit, updatedAt };
       return m.inquiries[i];
+    }
+  );
+}
+
+export async function deleteInquiry(id: string) {
+  return await safeDbOp(
+    async () => {
+      const query = mongoose.Types.ObjectId.isValid(id)
+        ? { $or: [{ id }, { _id: new mongoose.Types.ObjectId(id) }] }
+        : { id };
+      const res = await InquiryModel().deleteOne(query);
+      return res.deletedCount > 0;
+    },
+    () => {
+      const m = mem();
+      const i = m.inquiries.findIndex((x) => x.id === id);
+      if (i < 0) return false;
+      m.inquiries.splice(i, 1);
+      return true;
     }
   );
 }

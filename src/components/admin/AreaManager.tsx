@@ -17,6 +17,7 @@ import {
 import type { Area } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { showAlert } from "@/components/FeedbackDialog";
 
 export default function AreaManager({ initial }: { initial: Area[] }) {
   const router = useRouter();
@@ -150,7 +151,11 @@ export default function AreaManager({ initial }: { initial: Area[] }) {
       setDeleteConfirmArea(null);
       router.refresh();
     } catch (err: any) {
-      alert(err.message || "Could not delete area.");
+      await showAlert({
+        title: "Delete Failed",
+        message: err.message || "Could not delete area.",
+        tone: "danger",
+      });
     } finally {
       setIsDeleting(false);
     }

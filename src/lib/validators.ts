@@ -105,8 +105,16 @@ export const areaSchema = z.object({
 export const inquiryPatchSchema = z.object({
   status: z.enum(["new", "contacted", "visit-scheduled", "converted", "closed"]).optional(),
   notes: z.string().max(2000).optional(),
+  email: z.string().max(254).optional().or(z.literal("")),
+  sendEmail: z.boolean().optional(),
   visit: z
-    .object({ status: z.enum(["requested", "confirmed", "rescheduled", "cancelled"]).optional(), confirmedSlot: z.string().max(80).optional(), response: z.string().max(500).optional() })
+    .object({
+      date: z.string().max(40).optional(),
+      time: z.string().max(40).optional(),
+      status: z.enum(["requested", "confirmed", "rescheduled", "cancelled"]).optional(),
+      confirmedSlot: z.string().max(80).optional(),
+      response: z.string().max(500).optional(),
+    })
     .optional(),
 });
 

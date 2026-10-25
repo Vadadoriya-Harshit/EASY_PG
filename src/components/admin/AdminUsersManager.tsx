@@ -16,6 +16,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { showAlert } from "@/components/FeedbackDialog";
 
 interface AdminUserItem {
   id: string;
@@ -109,7 +110,11 @@ export default function AdminUsersManager({ currentUserEmail }: { currentUserEma
       setDeleteConfirmEmail(null);
       await fetchUsers();
     } catch (err: any) {
-      alert(err.message || "Could not delete user.");
+      await showAlert({
+        title: "Delete Failed",
+        message: err.message || "Could not delete user account.",
+        tone: "danger",
+      });
     } finally {
       setIsDeleting(false);
     }

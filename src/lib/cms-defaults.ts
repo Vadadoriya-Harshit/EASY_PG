@@ -611,8 +611,8 @@ export const DEFAULT_CMS_DATA: SiteCmsData = {
     },
   ],
   seo: {
-    title: "PG in Ahmedabad | Boys & Girls PG Accommodation | Luxora PG",
-    description: "Find boys and girls PG accommodation in Ahmedabad: compare rent, single, double and triple sharing, facilities and metro distance, then book a free visit.",
+    title: "Best PG in Ahmedabad | Boys & Girls Luxury PG | Luxora PG",
+    description: "Looking for the best PG in Ahmedabad? Luxora PG offers luxury AC & non-AC rooms for boys and girls with hygienic food, high-speed Wi-Fi, 24/7 security in Satellite, Navrangpura & Vastrapur. Book a free visit today!",
     ogImage: "/images/hero-building.jpg",
   },
 };

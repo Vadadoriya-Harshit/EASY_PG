@@ -1,7 +1,14 @@
 export function getSiteUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (envUrl && !envUrl.includes("your-domain.example")) {
+  if (
+    envUrl &&
+    !envUrl.includes("your-domain.example") &&
+    !envUrl.includes("luxora-pg.onrender.com")
+  ) {
     return envUrl.replace(/\/$/, "");
+  }
+  if (process.env.RENDER_EXTERNAL_URL) {
+    return process.env.RENDER_EXTERNAL_URL.replace(/\/$/, "");
   }
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`.replace(/\/$/, "");
@@ -9,7 +16,10 @@ export function getSiteUrl(): string {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`.replace(/\/$/, "");
   }
-  return "http://localhost:3000";
+  if (process.env.NODE_ENV === "production") {
+    return "https://easy-pg-hjvp.onrender.com";
+  }
+  return envUrl ? envUrl.replace(/\/$/, "") : "http://localhost:3000";
 }
 
 export const SITE = {

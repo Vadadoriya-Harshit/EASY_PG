@@ -14,13 +14,64 @@ import RouteTransitionLoader from "@/components/RouteTransitionLoader";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
-  title: { default: "Luxora PG | Feel At Home, Live In Luxury", template: "%s | Luxora PG" },
-  description: "Luxora PG — Feel At Home, Live In Luxury. Find premium boys and girls PG accommodation in Ahmedabad with high-speed Wi-Fi, hygienic food, 24/7 security, and transparent rent.",
-  // Self-referencing canonical for every page that does not set its own. OG title/description are left to each page
-  // (crawlers fall back to the page <title> and meta description) so shares never show the homepage text.
+  title: {
+    default: "Best PG in Ahmedabad | Luxora PG - Luxury Boys & Girls Stay",
+    template: "%s | Luxora PG",
+  },
+  description:
+    "Looking for the best PG in Ahmedabad? Luxora PG offers premium, fully-furnished boys and girls PG accommodation in Satellite, Navrangpura, Vastrapur & Thaltej with 3-time meals, high-speed Wi-Fi, 24/7 security, AC & zero brokerage.",
+  keywords: [
+    "PG in Ahmedabad",
+    "Best PG in Ahmedabad",
+    "Boys PG in Ahmedabad",
+    "Girls PG in Ahmedabad",
+    "Paying Guest in Ahmedabad",
+    "Luxury PG Ahmedabad",
+    "Easy PG Ahmedabad",
+    "PG near Satellite Ahmedabad",
+    "PG in Navrangpura",
+    "PG in Vastrapur",
+    "PG in Thaltej",
+    "PG with food in Ahmedabad",
+    "Student PG Ahmedabad",
+    "Hostel in Ahmedabad",
+    "Single room PG Ahmedabad",
+    "Double sharing PG Ahmedabad",
+  ],
   alternates: { canonical: "./" },
-  openGraph: { type: "website", siteName: "Luxora PG", locale: "en_IN" },
-  twitter: { card: "summary_large_image" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Luxora PG - Best PG in Ahmedabad",
+    locale: "en_IN",
+    url: SITE.url,
+    title: "Best PG in Ahmedabad | Luxora PG (Easy PG)",
+    description: "Premium boys and girls PG accommodation across top Ahmedabad localities with hygienic food, Wi-Fi, AC, and 24/7 security.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Best PG in Ahmedabad | Luxora PG",
+    description: "Premium boys and girls PG accommodation in Ahmedabad with hygienic food, Wi-Fi, and 24/7 security.",
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+  },
+  other: {
+    "geo.region": "IN-GJ",
+    "geo.placename": "Ahmedabad",
+    "geo.position": "23.0225;72.5714",
+    ICBM: "23.0225, 72.5714",
+  },
   icons: {
     icon: "/icon.svg",
     shortcut: "/favicon.svg",

@@ -46,6 +46,24 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
+  // SEO: 301 permanent redirect from temporary render domain or www mismatch to canonical custom domain
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl && process.env.NODE_ENV === "production" && !isLocalHost) {
+    try {
+      const canonicalHost = new URL(siteUrl).hostname.toLowerCase();
+      if (canonicalHost && hostName && hostName !== canonicalHost) {
+        if (
+          (!canonicalHost.includes("onrender.com") && hostName.endsWith(".onrender.com")) ||
+          hostName === `www.${canonicalHost}` ||
+          `www.${hostName}` === canonicalHost
+        ) {
+          const canonicalUrl = new URL(pathname + req.nextUrl.search, siteUrl);
+          return NextResponse.redirect(canonicalUrl, 301);
+        }
+      }
+    } catch {}
+  }
+
   if (pathname.startsWith("/api/") && crossSite(req)) {
     return NextResponse.json({ error: "Cross-site request blocked." }, { status: 403, headers: { "Cache-Control": "no-store" } });
   }
